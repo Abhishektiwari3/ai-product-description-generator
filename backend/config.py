@@ -28,11 +28,11 @@ class Settings:
 
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     openai_text_model: str = os.getenv("OPENAI_TEXT_MODEL", "gpt-4o-mini")
-    openai_image_model: str = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
+    openai_image_model: str = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-2")
 
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
-    gemini_text_model: str = os.getenv("GEMINI_TEXT_MODEL", "gemini-2.5-flash")
-    gemini_image_model: str = os.getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
+    gemini_text_model: str = os.getenv("GEMINI_TEXT_MODEL", "gemini-3.5-flash")
+    gemini_image_model: str = os.getenv("GEMINI_IMAGE_MODEL", "gemini-nano-banana-2.1")
 
     # Slide 8: timeout + bounded retry policy
     request_timeout_s: float = float(os.getenv("REQUEST_TIMEOUT_S", "60"))
@@ -57,7 +57,9 @@ class Settings:
 
     def resolve_provider(self, requested: Optional[str]) -> str:
         """Pick the provider for one request. 'auto' prefers a configured real provider."""
-        p = (requested or self.default_provider or "auto").lower()
+        p = (requested or "auto").lower()
+        if p == "auto":  # the request left it open: use the server's DEFAULT_PROVIDER setting
+            p = (self.default_provider or "auto").lower()
         if p == "auto":
             if self.openai_api_key:
                 return "openai"

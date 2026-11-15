@@ -52,6 +52,11 @@ def _post(settings: Settings, url: str, *, headers: dict, json_body: Optional[di
             if r.status_code in (401, 403):
                 raise ProviderError("auth", "The AI provider rejected the API key. Check server configuration.", 502)
             if r.status_code == 429:
+                body = r.text.lower()
+                if "limit: 0" in body or "insufficient_quota" in body or "billing" in body:
+                    # A plan with no quota for this model: retrying cannot help.
+                    raise ProviderError("quota", "Your AI provider plan has no quota for this model. Turn on billing "
+                                        "for your API key (Google AI Studio or OpenAI Billing), then try again.", 429)
                 last = ProviderError("rate_limited", "The AI provider is rate-limiting requests. Try again shortly.", 429)
             elif r.status_code >= 500:
                 last = ProviderError("upstream", "The AI provider had a temporary error. Please retry.", 502)

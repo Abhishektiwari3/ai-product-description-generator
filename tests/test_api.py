@@ -6,6 +6,8 @@ import io
 import os
 
 os.environ["DEFAULT_PROVIDER"] = "mock"
+os.environ["OPENAI_API_KEY"] = ""  # tests never call paid APIs, even if a .env has keys
+os.environ["GEMINI_API_KEY"] = ""
 os.environ["MONGO_URI"] = "mongodb://localhost:1"  # force the in-memory fallback
 os.environ["RATE_LIMIT_PER_MINUTE"] = "1000"
 

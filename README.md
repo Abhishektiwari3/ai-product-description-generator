@@ -66,6 +66,9 @@ To get the latest changes on a device you already cloned to, run `git pull`.
 > `.env` holds your API keys and is never uploaded (it is in `.gitignore`). Create it again on each device.
 
 * **No API key?** Everything still works with the built-in *offline* provider (template copy + Pillow image processing). The header shows “Offline AI”.
+* **Gemini key** (from https://aistudio.google.com/apikey): put it in `.env` as `GEMINI_API_KEY=...`. Text modes work on the free tier (default model `gemini-3.5-flash`). The image modes use `gemini-nano-banana-2.1`, which has **no free-tier quota** — turn on billing for the key, or the app shows a “no quota” message.
+* **OpenAI key** (from https://platform.openai.com/api-keys): put it in `.env` as `OPENAI_API_KEY=...`. Needs account credit; image models may need organization verification.
+* Set `DEFAULT_PROVIDER=mock|gemini|openai` in `.env` to choose what “Auto” uses.
 * **No MongoDB?** The app falls back to an in-memory database (header shows “In-memory DB”; data is lost on restart).
 
 ### MongoDB
