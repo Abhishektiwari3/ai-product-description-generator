@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Product Description Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%237c5cff'/><path d='M9 22l7-12 7 12' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
+</head>
+<body>
+  <div class="bg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 32 32"><path d="M9 22l7-12 7 12" /><circle cx="16" cy="24" r="1.6" /></svg>
+      </div>
+      <div>
+        <div class="brand-name">ListingLab <span class="grad">AI</span></div>
+        <div class="brand-sub">AI Product Description Generator</div>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-page="studio">Studio</button>
+      <button class="tab" data-page="history">History</button>
+      <button class="tab" data-page="evaluation">Evaluation</button>
+      <button class="tab" data-page="voices">Brand voices</button>
+      <button class="tab" data-page="about">About project</button>
+    </nav>
+    <div class="status">
+      <span class="chip" id="chip-provider" title="Default AI provider"><i class="dot"></i><span>…</span></span>
+      <span class="chip" id="chip-db" title="Database"><i class="dot"></i><span>…</span></span>
+      <button class="icon-btn" id="theme-toggle" title="Toggle light/dark" aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================ STUDIO ============================ -->
+    <section class="page active" id="page-studio">
+      <div class="hero">
+        <h1>Turn product facts into <span class="grad">listing-ready</span> copy &amp; visuals</h1>
+        <p>Fact-first generation with a human review step. Automate the repetitive draft — keep product truth and publishing decisions with the seller.</p>
+      </div>
+
+      <div class="modes" role="radiogroup" aria-label="Generation mode">
+        <button class="mode active" data-mode="text-to-text">
+          <div class="mode-ic"><span>Aa</span><b>→</b><span>Aa</span></div>
+          <div class="mode-t">Text → Text</div>
+          <div class="mode-d">Facts to title, description, bullets &amp; SEO meta</div>
+        </button>
+        <button class="mode" data-mode="text-to-image">
+          <div class="mode-ic"><span>Aa</span><b>→</b><span class="ic-img"></span></div>
+          <div class="mode-t">Text → Image</div>
+          <div class="mode-d">Facts to a product visual in a chosen style</div>
+        </button>
+        <button class="mode" data-mode="image-to-text">
+          <div class="mode-ic"><span class="ic-img"></span><b>→</b><span>Aa</span></div>
+          <div class="mode-t">Image → Text</div>
+          <div class="mode-d">Product photo to a reviewable listing draft</div>
+        </button>
+        <button class="mode" data-mode="image-to-image">
+          <div class="mode-ic"><span class="ic-img"></span><b>→</b><span class="ic-img alt"></span></div>
+          <div class="mode-t">Image → Image</div>
+          <div class="mode-d">Restyle a product photo for your storefront</div>
+        </button>
+      </div>
+
+      <ol class="stepper" id="stepper">
+        <li data-step="1" class="on"><span>1</span>Enter facts</li>
+        <li data-step="2"><span>2</span>Choose style</li>
+        <li data-step="3"><span>3</span>Generate</li>
+        <li data-step="4"><span>4</span>Review</li>
+        <li data-step="5"><span>5</span>Export</li>
+      </ol>
+
+      <div class="studio">
+        <!-- ---------- form ---------- -->
+        <form class="card form" id="gen-form" novalidate autocomplete="off">
+          <div class="card-head">
+            <h2 id="form-title">Product facts</h2>
+            <button type="button" class="btn ghost sm" id="load-example">Load example</button>
+          </div>
+
+          <div class="field" data-modes="image-to-text image-to-image">
+            <label>Product photo <em>*</em></label>
+            <label class="dropzone" id="dropzone">
+              <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp" hidden />
+              <div class="dz-empty">
+                <div class="dz-ic"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
+                <div><b>Drop an image</b> or click to browse</div>
+                <small>PNG, JPG or WEBP · up to <span id="max-mb">8</span> MB</small>
+              </div>
+              <img id="dz-preview" alt="" hidden />
+            </label>
+            <div class="err" data-err="image"></div>
+          </div>
+
+          <div class="grid2">
+            <div class="field" data-modes="text-to-text text-to-image image-to-text">
+              <label for="f-name">Product name <em class="req-tt">*</em></label>
+              <input id="f-name" name="product_name" maxlength="120" placeholder="e.g. Reusable insulated bottle" />
+              <div class="err" data-err="product_name"></div>
+            </div>
+            <div class="field" data-modes="text-to-text text-to-image image-to-text">
+              <label for="f-category">Category <em class="req-tt">*</em></label>
+              <input id="f-category" name="category" maxlength="80" placeholder="e.g. Drinkware" list="cat-list" />
+              <datalist id="cat-list"><option>Drinkware</option><option>Apparel</option><option>Electronics</option><option>Home &amp; Kitchen</option><option>Beauty</option><option>Furniture</option><option>Sports &amp; Outdoors</option><option>Toys</option></datalist>
+              <div class="err" data-err="category"></div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field" data-modes="text-to-text text-to-image image-to-text">
+              <label for="f-materials">Materials</label>
+              <input id="f-materials" name="materials" maxlength="300" placeholder="e.g. Stainless steel" />
+              <div class="err" data-err="materials"></div>
+            </div>
+            <div class="field" data-modes="text-to-text image-to-text">
+              <label for="f-size">Size / capacity</label>
+              <input id="f-size" name="size" maxlength="120" placeholder="Leave blank if unknown — never guessed" />
+              <div class="err" data-err="size"></div>
+            </div>
+          </div>
+
+          <div class="field" data-modes="text-to-text text-to-image image-to-text">
+            <label for="f-features">Features <small>one per line</small></label>
+            <textarea id="f-features" name="features" rows="3" placeholder="Double-wall construction&#10;Leak-resistant lid"></textarea>
+            <div class="err" data-err="features"></div>
+          </div>
+
+          <div class="grid2">
+            <div class="field" data-modes="text-to-text image-to-text">
+              <label for="f-audience">Target audience</label>
+              <input id="f-audience" name="target_audience" maxlength="200" placeholder="e.g. commuters and hikers" />
+            </div>
+            <div class="field" data-modes="text-to-text">
+              <label for="f-usecase">Use case</label>
+              <input id="f-usecase" name="use_case" maxlength="300" placeholder="e.g. daily office use" />
+            </div>
+          </div>
+
+          <div class="field" data-modes="text-to-text image-to-text">
+            <label>Brand voice</label>
+            <div class="pills" id="tone-pills"></div>
+          </div>
+
+          <div class="grid2" data-modes="text-to-text image-to-text">
+            <div class="field" data-modes="text-to-text">
+              <label for="f-voice">Saved brand voice</label>
+              <select id="f-voice"><option value="">None</option></select>
+            </div>
+            <div class="field" data-modes="text-to-text image-to-text">
+              <label for="f-keyword">Target keyword <small>optional</small></label>
+              <input id="f-keyword" name="keyword" maxlength="80" placeholder="e.g. insulated bottle" />
+            </div>
+          </div>
+
+          <div class="field" data-modes="text-to-image image-to-image">
+            <label>Visual style</label>
+            <div class="styles" id="style-tiles"></div>
+          </div>
+
+          <div class="field" data-modes="text-to-image image-to-image">
+            <label for="f-extra">Extra direction <small>optional</small></label>
+            <input id="f-extra" maxlength="500" placeholder="e.g. place on a wooden desk, morning light" />
+            <div class="err" data-err="extra_prompt"></div>
+          </div>
+
+          <div class="grid2">
+            <div class="field" data-modes="text-to-text image-to-text">
+              <label for="f-format">Output format</label>
+              <select id="f-format"></select>
+            </div>
+            <div class="field" data-modes="text-to-text text-to-image image-to-text image-to-image">
+              <label for="f-provider">AI provider</label>
+              <select id="f-provider"></select>
+            </div>
+          </div>
+
+          <div class="form-foot">
+            <p class="guard"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg>Optional fields stay optional — missing facts are flagged, never guessed.</p>
+            <button class="btn primary lg" id="generate-btn" type="submit">
+              <span class="btn-label">Generate</span><span class="spinner" hidden></span>
+            </button>
+          </div>
+          <div class="form-error" id="form-error" hidden></div>
+        </form>
+
+        <!-- ---------- result ---------- -->
+        <section class="card result" id="result">
+          <div class="empty-state" id="empty-state">
+            <div class="es-art">
+              <div class="es-card a"></div><div class="es-card b"></div><div class="es-card c"></div>
+            </div>
+            <h3>Your draft appears here</h3>
+            <p>Every draft is a starting point. Review each claim against your product data before exporting.</p>
+          </div>
+
+          <div class="skeleton" id="skeleton" hidden>
+            <div class="sk h"></div><div class="sk"></div><div class="sk"></div><div class="sk w60"></div>
+            <div class="sk box"></div>
+          </div>
+
+          <!-- text result -->
+          <div id="text-result" hidden>
+            <div class="res-head">
+              <h2>Review draft</h2>
+              <div class="meta-badges" id="text-badges"></div>
+            </div>
+            <div class="uploaded-thumb" id="it-thumb" hidden><img alt="Uploaded product" /><div class="analysis" id="it-analysis"></div></div>
+
+            <div class="flags" id="text-flags"></div>
+
+            <div class="field"><label for="r-title">Title <small class="count" data-for="r-title"></small></label><input id="r-title" /></div>
+            <div class="field"><label for="r-desc">Description</label><textarea id="r-desc" rows="5"></textarea></div>
+            <div class="field"><label for="r-bullets">Feature bullets <small>one per line</small></label><textarea id="r-bullets" rows="4"></textarea></div>
+            <div class="field"><label for="r-meta">Meta description <small class="count" data-for="r-meta" data-max="160"></small></label><input id="r-meta" /></div>
+
+            <details class="prompt-box"><summary>Prompt sent to the model</summary><pre id="r-prompt"></pre></details>
+
+            <div class="review-box">
+              <h3>Human review</h3>
+              <div class="review-grid">
+                <div class="field"><label>Quality rating</label><div class="stars" id="stars"></div></div>
+                <div class="field"><label for="r-claims">Claims checked</label><input type="number" min="0" id="r-claims" value="0" /></div>
+                <div class="field"><label for="r-unsupported">Unsupported claims found</label><input type="number" min="0" id="r-unsupported" value="0" /></div>
+              </div>
+              <label class="check"><input type="checkbox" id="r-confirm" /><span>I compared every claim with the product data and edited unclear wording.</span></label>
+              <div class="export-row">
+                <button class="btn primary" id="approve-btn" disabled>Approve draft</button>
+                <div class="seg" id="export-format"></div>
+                <button class="btn ghost" id="copy-btn" disabled>Copy</button>
+                <button class="btn ghost" id="download-btn" disabled>Download</button>
+              </div>
+              <p class="hint" id="approve-hint">Tick the review box to unlock approval and export.</p>
+            </div>
+          </div>
+
+          <!-- image result -->
+          <div id="image-result" hidden>
+            <div class="res-head">
+              <h2 id="img-res-title">Generated image</h2>
+              <div class="meta-badges" id="img-badges"></div>
+            </div>
+            <div class="flags" id="img-flags"></div>
+            <div class="img-stage" id="img-single"><img id="img-out" alt="Generated product image" /></div>
+            <div class="compare" id="img-compare" hidden>
+              <img id="cmp-before" alt="Original" />
+              <div class="cmp-after" id="cmp-after-wrap"><img id="cmp-after" alt="Restyled" /></div>
+              <div class="cmp-handle" id="cmp-handle"><span></span></div>
+              <input type="range" min="0" max="100" value="50" id="cmp-range" aria-label="Before/after slider" />
+              <b class="cmp-tag l">Before</b><b class="cmp-tag r">After</b>
+            </div>
+            <details class="prompt-box"><summary>Prompt sent to the model</summary><pre id="img-prompt"></pre></details>
+            <div class="review-box">
+              <h3>Human review</h3>
+              <div class="field"><label>Quality rating</label><div class="stars" id="img-stars"></div></div>
+              <label class="check"><input type="checkbox" id="img-confirm" /><span>The product shown matches the real item (shape, colour, labels).</span></label>
+              <div class="export-row">
+                <button class="btn primary" id="img-approve" disabled>Approve image</button>
+                <a class="btn ghost disabled" id="img-download" download="product.png">Download PNG</a>
+                <button class="btn ghost" id="img-to-text" title="Describe this image">Use for Image → Text</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============================ HISTORY ============================ -->
+    <section class="page" id="page-history">
+      <div class="page-head">
+        <div><h1>History</h1><p>Every generation is stored in MongoDB with its inputs, output, latency and review.</p></div>
+        <div class="seg" id="history-filter"></div>
+      </div>
+      <div class="history-grid" id="history-grid"></div>
+    </section>
+
+    <!-- ============================ EVALUATION ============================ -->
+    <section class="page" id="page-evaluation">
+      <div class="page-head">
+        <div><h1>Evaluation</h1><p>Measure usefulness before claiming impact. Numbers below come from your own stored requests and reviews.</p></div>
+        <button class="btn ghost" id="refresh-metrics">Refresh</button>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="eval-cols">
+        <div class="card">
+          <h2>Latency by mode <small>median, successful requests</small></h2>
+          <div class="bars" id="latency-bars"></div>
+          <details class="table-view"><summary>Table view</summary><table class="tbl" id="latency-table"></table></details>
+        </div>
+        <div class="card">
+          <h2>Evaluation plan</h2>
+          <table class="tbl">
+            <thead><tr><th>Question</th><th>Measure</th><th>How to evaluate</th></tr></thead>
+            <tbody>
+              <tr><td>Did it save time?</td><td>Seconds per approved listing</td><td>Compare manual and assisted tasks on the same product set</td></tr>
+              <tr><td>Are facts accurate?</td><td>Unsupported claim rate</td><td>Review each generated claim against source product data</td></tr>
+              <tr><td>Is the copy usable?</td><td>Human quality rating</td><td>Blind reviewer scores clarity, completeness, voice</td></tr>
+              <tr><td>Does the interface work?</td><td>Task completion / error rate</td><td>Observe sellers completing input, review, export</td></tr>
+              <tr><td>Does it help search?</td><td>Search performance over time</td><td>Test live pages; separate copy from technical SEO changes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Source claims vs. evidence</h2>
+        <table class="tbl" id="claims-table">
+          <thead><tr><th>Source claim</th><th>What we can say now</th><th>What to verify</th><th>Measured here</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="note">30 minutes → 30 seconds is <b>60× faster</b>, or a <b>98.3%</b> time reduction — not 95% — if both times are accurate. The original deck does not show how either time was measured.</p>
+      </div>
+    </section>
+
+    <!-- ============================ VOICES ============================ -->
+    <section class="page" id="page-voices">
+      <div class="page-head"><div><h1>Brand voices</h1><p>Saved voice rules keep tone consistent across SKUs. Rules guide style; facts never change.</p></div></div>
+      <div class="voices-layout">
+        <form class="card" id="voice-form">
+          <h2>New voice</h2>
+          <div class="field"><label for="v-name">Name</label><input id="v-name" maxlength="60" required placeholder="e.g. Nordic calm" /></div>
+          <div class="field"><label for="v-tone">Base tone</label><select id="v-tone"></select></div>
+          <div class="field"><label for="v-rules">Rules</label><textarea id="v-rules" rows="4" maxlength="1500" placeholder="Short sentences. No exclamation marks. Mention care instructions last."></textarea></div>
+          <div class="field"><label for="v-example">Example copy <small>style only</small></label><textarea id="v-example" rows="3" maxlength="1500"></textarea></div>
+          <button class="btn primary" type="submit">Save voice</button>
+        </form>
+        <div class="voice-list" id="voice-list"></div>
+      </div>
+    </section>
+
+    <!-- ============================ ABOUT ============================ -->
+    <section class="page" id="page-about">
+      <div class="about-hero card">
+        <div>
+          <span class="eyebrow">Research project</span>
+          <h1>AI Product Description Generator</h1>
+          <p>A practical workflow for creating clearer, consistent product listings.</p>
+          <p class="authors">Abhishek Tiwari · 1338220 &nbsp;&nbsp;|&nbsp;&nbsp; Biren Gohel · 1317182</p>
+        </div>
+        <blockquote>Generate a draft from facts the seller provides. The first version sends the facts with each request — no model training, no catalog database search.</blockquote>
+      </div>
+
+      <div class="about-grid">
+        <div class="card">
+          <h2>The catalog writing problem</h2>
+          <table class="tbl"><thead><tr><th>What sellers have</th><th>What customers need</th></tr></thead><tbody>
+            <tr><td>Raw attributes and notes</td><td>A quick sense of fit and use</td></tr>
+            <tr><td>Different writing styles across SKUs</td><td>Consistent voice across a range</td></tr>
+            <tr><td>Repeated manual drafting</td><td>Fast updates when products change</td></tr>
+            <tr><td>Search terms may be overlooked</td><td>Clear titles and descriptions</td></tr>
+          </tbody></table>
+          <p class="note"><b>Human cost:</b> a wrong material, size, compatibility statement or performance claim can mislead a buyer. Automation should remove blank-page work, not remove responsibility.</p>
+        </div>
+        <div class="card">
+          <h2>Why this project was selected</h2>
+          <table class="tbl"><thead><tr><th>Project idea</th><th>Effort</th><th>Infrastructure</th><th>Estimate</th></tr></thead><tbody>
+            <tr class="hl"><td>Product description generator</td><td><span class="tag good">Very low</span></td><td>LLM API</td><td>3–5 days</td></tr>
+            <tr><td>Healthcare chatbot with RAG</td><td><span class="tag warn">High</span></td><td>Embeddings + vector DB</td><td>3–4 weeks</td></tr>
+            <tr><td>3D model generator</td><td><span class="tag bad">Very high</span></td><td>GPU + custom models</td><td>8–12 weeks</td></tr>
+            <tr><td>Autonomous code agent</td><td><span class="tag warn">High</span></td><td>Sandbox + agent tools</td><td>4–6 weeks</td></tr>
+          </tbody></table>
+          <p class="note">Planning estimates from the source presentation.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>System architecture</h2>
+        <div class="arch">
+          <div class="node"><b>Seller</b><span>Product facts, style, destination</span></div><i></i>
+          <div class="node"><b>Web UI</b><span>Form validation, live preview</span></div><i></i>
+          <div class="node"><b>FastAPI logic</b><span>Validate · normalize · prompt · provider adapter</span></div><i></i>
+          <div class="node acc"><b>LLM provider</b><span>OpenAI · Gemini · Offline</span></div><i></i>
+          <div class="node"><b>Response check</b><span>Parse JSON, required fields, claim guardrail</span></div><i></i>
+          <div class="node db"><b>MongoDB</b><span>generations · images · voices · logs</span></div><i></i>
+          <div class="node"><b>Seller</b><span>Edit, approve, copy or export</span></div>
+        </div>
+        <p class="note">Server-side responsibilities: provider keys stay out of the browser; the backend owns timeouts, bounded retries, safe errors, request limits and minimal logs.</p>
+      </div>
+
+      <div class="card">
+        <h2>What happens during one request</h2>
+        <div class="pipeline">
+          <div><span>01</span><b>Validate</b><p>Required fields, text length, allowed tone and export option</p></div>
+          <div><span>02</span><b>Normalize</b><p>Trim whitespace and package the facts consistently</p></div>
+          <div><span>03</span><b>Build prompt</b><p>Facts + tone rules + optional keyword + JSON schema</p></div>
+          <div><span>04</span><b>Call model</b><p>Secure request with timeout and bounded retry</p></div>
+          <div><span>05</span><b>Check response</b><p>Parse JSON; field types, required values, empty results</p></div>
+          <div><span>06</span><b>Return draft</b><p>Field-by-field preview with copy and export actions</p></div>
+        </div>
+      </div>
+
+      <div class="about-grid">
+        <div class="card">
+          <h2>Limitations &amp; safeguards</h2>
+          <table class="tbl"><thead><tr><th>Limitation</th><th>Safeguard in this build</th></tr></thead><tbody>
+            <tr><td>Model may invent or overstate a benefit</td><td>Fact-only prompt + automatic unsupported-claim flags + human review</td></tr>
+            <tr><td>SEO wording cannot guarantee rank or traffic</td><td>Keyword used naturally; overuse flagged; measure real outcomes</td></tr>
+            <tr><td>Provider latency, outages or cost vary</td><td>Timeouts, limited retries, rate limit, latency logged in MongoDB</td></tr>
+            <tr><td>Tone may sound generic or inconsistent</td><td>Saved brand voices with rules + examples; human editing</td></tr>
+            <tr><td>Export may not match every storefront schema</td><td>Plain / HTML / JSON / CSV exports; validate required fields</td></tr>
+            <tr><td>Product data can be sensitive</td><td>Keys server-side, STORE_INPUTS switch, delete from history</td></tr>
+            <tr><td>Schema checks structure, not truth</td><td>Review gate before approval and export</td></tr>
+            <tr><td>Generated images are illustrations</td><td>Flagged on every image; must be compared with the real product</td></tr>
+            <tr><td>Image → text can misread a photo</td><td>Only visible details used; material/size marked “not verified”</td></tr>
+            <tr><td>Image → image may alter the product</td><td>Prompt locks shape/colour/labels; reviewer confirms before use</td></tr>
+            <tr><td>Offline mode is template-based</td><td>Clearly labelled; add an API key for model-quality output</td></tr>
+          </tbody></table>
+        </div>
+        <div class="card">
+          <h2>Five-day build plan</h2>
+          <ul class="timeline">
+            <li><b>Day 1 · Working form</b><span>Product fields, test API request, one basic result</span></li>
+            <li><b>Day 2 · Prompt design</b><span>Output fields, tone rules, examples exposing unsupported claims</span></li>
+            <li><b>Day 3 · SEO + formatting</b><span>Optional keyword guidance and export formats</span></li>
+            <li><b>Days 4–5 · Review + export</b><span>Representative products, error tests, copy/export, polish</span></li>
+          </ul>
+          <h2 style="margin-top:22px">Next steps</h2>
+          <ul class="ticks">
+            <li>Build the smallest usable flow with fact-first prompts and a reviewable schema.</li>
+            <li>Test output quality and time savings on a representative catalogue sample.</li>
+            <li>Add batch editing and direct store integrations only after validation.</li>
+          </ul>
+          <div class="conclusion">Automate the repetitive draft. Keep product truth and publication decisions with the seller.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>References</h2>
+        <ol class="refs">
+          <li><a href="https://platform.openai.com/docs/guides/structured-outputs" target="_blank" rel="noopener">OpenAI API, Structured Outputs</a></li>
+          <li><a href="https://ai.google.dev/gemini-api/docs/generate-content/structured-output" target="_blank" rel="noopener">Google AI for Developers, Gemini structured outputs</a></li>
+          <li><a href="https://docs.streamlit.io/develop/concepts/connections/secrets-management" target="_blank" rel="noopener">Streamlit documentation, Secrets management</a></li>
+          <li><a href="https://developers.google.com/search/docs/fundamentals/get-started-developers" target="_blank" rel="noopener">Google Search Central, Developer guide</a></li>
+          <li><a href="https://developers.google.com/search/docs/specialty/ecommerce/share-your-product-data-with-google" target="_blank" rel="noopener">Google Search Central, Share product data with Google</a></li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card">
+      <button class="icon-btn modal-close" id="modal-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <div class="toasts" id="toasts"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

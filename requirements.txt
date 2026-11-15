@@ -1,0 +1,16 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.5
+python-multipart>=0.0.9
+httpx>=0.27
+pillow>=10.1
+pymongo>=4.6
+mongomock>=4.1
+python-dotenv>=1.0
+# notebook
+pandas>=2.0
+matplotlib>=3.7
+nbformat>=5.9
+jupyter
+# tests
+pytest>=8.0
