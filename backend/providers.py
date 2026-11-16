@@ -1,15 +1,3 @@
-"""Provider adapters - step 04 'Call model' (slides 7, 8, 10).
-
-Each adapter supports the four modes:
-    generate_listing  : text  -> text
-    generate_image    : text  -> image
-    describe_image    : image -> text
-    edit_image        : image -> image
-
-Real providers (OpenAI, Gemini) are called over HTTPS with a timeout and a
-bounded retry policy. The Mock provider works fully offline so the project can
-be demonstrated and tested without any API key.
-"""
 from __future__ import annotations
 
 import base64
@@ -54,14 +42,12 @@ def _post(settings: Settings, url: str, *, headers: dict, json_body: Optional[di
             if r.status_code == 429:
                 body = r.text.lower()
                 if "limit: 0" in body or "insufficient_quota" in body or "billing" in body:
-                    # A plan with no quota for this model: retrying cannot help.
                     raise ProviderError("quota", "Your AI provider plan has no quota for this model. Turn on billing "
                                         "for your API key (Google AI Studio or OpenAI Billing), then try again.", 429)
                 last = ProviderError("rate_limited", "The AI provider is rate-limiting requests. Try again shortly.", 429)
             elif r.status_code >= 500:
                 last = ProviderError("upstream", "The AI provider had a temporary error. Please retry.", 502)
             elif r.status_code >= 400:
-                # Do not leak raw provider bodies to the browser; keep a short hint only.
                 hint = ""
                 try:
                     hint = (r.json().get("error") or {}).get("message", "")[:160]
@@ -82,8 +68,6 @@ def _b64(data: bytes) -> str:
 
 # ------------------------------------------------------------------ base
 class BaseProvider:
-    name = "base"
-
     def __init__(self, settings: Settings):
         self.settings = settings
 
@@ -110,7 +94,6 @@ class BaseProvider:
 
 # ------------------------------------------------------------------ OpenAI
 class OpenAIProvider(BaseProvider):
-    name = "openai"
     base = "https://api.openai.com/v1"
 
     @property
@@ -129,7 +112,6 @@ class OpenAIProvider(BaseProvider):
             "model": self.text_model,
             "temperature": 0.4,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user_content}],
-            # Structured Outputs: the model must return this exact JSON shape (reference 1).
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {"name": "listing_draft", "strict": True, "schema": LISTING_JSON_SCHEMA},
@@ -195,7 +177,6 @@ GEMINI_SCHEMA = {
 
 
 class GeminiProvider(BaseProvider):
-    name = "gemini"
     base = "https://generativelanguage.googleapis.com/v1beta/models"
 
     @property
@@ -215,7 +196,7 @@ class GeminiProvider(BaseProvider):
         if system:
             body["systemInstruction"] = {"parts": [{"text": system}]}
         cfg: dict = {}
-        if json_mode:  # Structured output (reference 2)
+        if json_mode:
             cfg.update({"responseMimeType": "application/json", "responseSchema": GEMINI_SCHEMA, "temperature": 0.4})
         if image_out:
             cfg["responseModalities"] = ["TEXT", "IMAGE"]
@@ -271,8 +252,6 @@ def _join(items: List[str]) -> str:
 class MockProvider(BaseProvider):
     """Deterministic, template-based drafts. Never invents numbers or claims."""
 
-    name = "mock"
-
     @property
     def text_model(self) -> str:
         return "offline-template-v1"
@@ -316,9 +295,7 @@ class MockProvider(BaseProvider):
             sentences.append(f"Size: {f.size.rstrip('.')}.")
         description = " ".join(sentences)
 
-        if f.keyword and f.keyword.lower() in description.lower():
-            pass
-        elif f.keyword and f.keyword.lower() not in nl:
+        if f.keyword and f.keyword.lower() not in description.lower() and f.keyword.lower() not in nl:
             description += f" A practical choice if you are looking for an {f.keyword.lower()}." \
                 if f.keyword[0].lower() in "aeiou" else f" A practical choice if you are looking for a {f.keyword.lower()}."
 

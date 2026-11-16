@@ -1,8 +1,3 @@
-"""Offline image utilities (Pillow only).
-
-Used by the mock provider so all four modes work without an API key, and to
-validate/normalise every uploaded image before it reaches a real provider.
-"""
 from __future__ import annotations
 
 import io
@@ -81,7 +76,7 @@ def _font(size: int, bold: bool = False):
             continue
     try:
         return ImageFont.load_default(size=size)
-    except TypeError:  # old Pillow
+    except TypeError:
         return ImageFont.load_default()
 
 
@@ -115,7 +110,7 @@ def analyze(img: Image.Image) -> dict:
     for count, idx in counts:
         c = tuple(pal[idx * 3: idx * 3 + 3])
         if sum((a - b) ** 2 for a, b in zip(c, bg)) < 900 and spread < 25:
-            continue  # skip background colour
+            continue
         name = _nearest_name(c)
         if name not in colours:
             colours.append(name)
@@ -177,14 +172,13 @@ def restyle(img: Image.Image, style: str, size: int = 1024) -> Image.Image:
     subject = Image.merge("RGBA", (*rgb.split(), subject.getchannel("A")))
     x = (size - subject.width) // 2
     y = (size - subject.height) // 2 - size // 40
-    # soft drop shadow
     shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     sh_alpha = subject.getchannel("A").point(lambda v: int(v * (0.55 if style == "luxury_dark" else 0.28)))
     shadow.paste((0, 0, 0, 255), (x + size // 60, y + size // 30), sh_alpha)
     shadow = shadow.filter(ImageFilter.GaussianBlur(size // 45))
     canvas = Image.alpha_composite(canvas, shadow)
     canvas.alpha_composite(subject, (x, y))
-    if style == "luxury_dark":  # vignette
+    if style == "luxury_dark":
         vig = Image.new("L", canvas.size, 0)
         ImageDraw.Draw(vig).ellipse([-size // 4, -size // 4, size * 5 // 4, size * 5 // 4], fill=255)
         vig = vig.filter(ImageFilter.GaussianBlur(size // 8))
@@ -197,15 +191,12 @@ def render_concept(name: str, category: str, features: List[str], style: str, si
     """Text -> image offline: a designed concept card (not a photo) built from the facts."""
     top, bottom, ink = STYLE_PALETTES.get(style, STYLE_PALETTES["studio_white"])
     img = _gradient((size, size), top, bottom).convert("RGBA")
-    d = ImageDraw.Draw(img)
-    # decorative blobs
     over = Image.new("RGBA", img.size, (0, 0, 0, 0))
     od = ImageDraw.Draw(over)
     od.ellipse([size * 0.55, -size * 0.15, size * 1.2, size * 0.5], fill=ink + (28,))
     od.ellipse([-size * 0.2, size * 0.6, size * 0.45, size * 1.25], fill=ink + (20,))
     img = Image.alpha_composite(img, over.filter(ImageFilter.GaussianBlur(30)))
     d = ImageDraw.Draw(img)
-    # monogram "product" disc
     cx, cy, r = size // 2, int(size * 0.36), int(size * 0.17)
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ink + (235,))
     initials = "".join(w[0] for w in name.split()[:2]).upper() or "?"

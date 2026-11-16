@@ -1,8 +1,3 @@
-"""FastAPI backend - the 'thin application layer' from slide 7.
-
-Run:  uvicorn backend.main:app --reload --port 8000   (from the project root)
-Then open http://localhost:8000
-"""
 from __future__ import annotations
 
 import collections
@@ -33,7 +28,7 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.allowed_origins, allow
 
 store = Store(settings)
 
-EXAMPLE = {  # Slide 12 - illustrative example only
+EXAMPLE = {
     "product_name": "Reusable insulated bottle",
     "category": "Drinkware",
     "materials": "Stainless steel",
@@ -47,7 +42,6 @@ EXAMPLE = {  # Slide 12 - illustrative example only
 }
 
 
-# ------------------------------------------------------------------ rate limiting (slide 7/10)
 _hits: Dict[str, Deque[float]] = collections.defaultdict(collections.deque)
 _lock = threading.Lock()
 
@@ -65,9 +59,8 @@ def rate_limit(request: Request) -> None:
         q.append(t)
 
 
-# ------------------------------------------------------------------ shared runner
 def run_mode(mode: str, provider_name: str, fn: Callable[[], dict]) -> dict:
-    """Time the call, log minimal metadata, and turn every failure into a safe error (slide 8)."""
+    """Time the call, log it, and turn every failure into a safe error."""
     t0 = time.perf_counter()
     try:
         out = fn()
@@ -109,7 +102,7 @@ async def bad_request(_request: Request, exc: RequestValidationError):
 
 
 @app.exception_handler(Exception)
-async def unexpected(_request: Request, _exc: Exception):  # never leak stack traces
+async def unexpected(_request: Request, _exc: Exception):
     return JSONResponse(status_code=500, content={"error": {"code": "server_error",
                                                             "message": "Something went wrong on the server."}})
 
@@ -120,11 +113,10 @@ def _features_from_text(text: str) -> List[str]:
 
 async def _read_upload(upload: UploadFile) -> bytes:
     data = await upload.read()
-    img = imaging.load_image(data, settings.max_image_mb)  # validates type + size
+    img = imaging.load_image(data, settings.max_image_mb)
     return imaging.to_png(img)
 
 
-# ------------------------------------------------------------------ info
 @app.get("/api/health")
 def health():
     return {"status": "ok", "db": store.backend, "providers": settings.available_providers(),
@@ -138,7 +130,6 @@ def meta():
             "example": EXAMPLE, "max_image_mb": settings.max_image_mb}
 
 
-# ------------------------------------------------------------------ 1. text -> text
 @app.post("/api/generate/text-to-text")
 def text_to_text(facts: ProductFacts, request: Request):
     rate_limit(request)
@@ -160,7 +151,6 @@ def text_to_text(facts: ProductFacts, request: Request):
     return run_mode("text-to-text", pname, work)
 
 
-# ------------------------------------------------------------------ 2. text -> image
 @app.post("/api/generate/text-to-image")
 def text_to_image(body: TextToImageRequest, request: Request):
     rate_limit(request)
@@ -188,7 +178,6 @@ def text_to_image(body: TextToImageRequest, request: Request):
     return run_mode("text-to-image", pname, work)
 
 
-# ------------------------------------------------------------------ 3. image -> text
 @app.post("/api/generate/image-to-text")
 async def image_to_text(request: Request, image: UploadFile = File(...), product_name: str = Form(""),
                         category: str = Form(""), materials: str = Form(""), size: str = Form(""),
@@ -211,9 +200,7 @@ async def image_to_text(request: Request, image: UploadFile = File(...), product
         f = normalize_facts(hints)
         prov = get_provider(pname, settings)
         prompt = build_vision_prompt(f)
-        draft = check_response(parse_model_json(prov.describe_image(prompt, png, f)))
-        # numbers seen in the photo cannot be checked against facts, so flag them but keep missing-fact checks
-        draft = finalize(draft, f, check_numbers=True)
+        draft = finalize(check_response(parse_model_json(prov.describe_image(prompt, png, f))), f)
         analysis = imaging.analyze(imaging.load_image(png))
         content, _, _ = export_draft(draft, f.output_format, f.product_name)
         iid = store.save_image(png, "upload")
@@ -227,7 +214,6 @@ async def image_to_text(request: Request, image: UploadFile = File(...), product
     return run_mode("image-to-text", pname, work)
 
 
-# ------------------------------------------------------------------ 4. image -> image
 @app.post("/api/generate/image-to-image")
 async def image_to_image(request: Request, image: UploadFile = File(...), style: str = Form("studio_white"),
                          extra_prompt: str = Form(""), provider: str = Form("auto")):
@@ -259,7 +245,6 @@ async def image_to_image(request: Request, image: UploadFile = File(...), style:
     return run_mode("image-to-image", pname, work)
 
 
-# ------------------------------------------------------------------ images, history, review, export
 @app.get("/api/images/{image_id}")
 def get_image(image_id: str):
     data = store.get_image(image_id)
@@ -311,7 +296,6 @@ def export(body: ExportRequest):
                     headers={"Content-Disposition": f'attachment; filename="{slug or "listing"}.{ext}"'})
 
 
-# ------------------------------------------------------------------ brand voices
 @app.get("/api/voices")
 def voices():
     return {"items": store.list_voices()}
@@ -331,13 +315,11 @@ def remove_voice(vid: str):
     return {"deleted": True}
 
 
-# ------------------------------------------------------------------ evaluation (slides 13-14)
 @app.get("/api/metrics")
 def metrics():
     return store.metrics()
 
 
-# ------------------------------------------------------------------ frontend
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 if FRONTEND.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND), html=True), name="frontend")

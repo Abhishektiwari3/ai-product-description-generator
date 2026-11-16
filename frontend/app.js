@@ -1,4 +1,3 @@
-/* ListingLab AI - frontend logic (vanilla JS, no build step). */
 (() => {
   "use strict";
   const $ = (s, el = document) => el.querySelector(s);
@@ -21,7 +20,6 @@
     result: null, rating: 0, imgRating: 0, shownAt: 0, exportFmt: "plain", historyMode: "",
   };
 
-  // ------------------------------------------------------------ helpers
   function toast(msg, kind = "") {
     const t = document.createElement("div");
     t.className = `toast ${kind}`;
@@ -44,7 +42,6 @@
     try { if (val === undefined) return localStorage.getItem(key); localStorage.setItem(key, val); } catch { return null; }
   }
 
-  // ------------------------------------------------------------ theme
   function applyTheme(t) { document.documentElement.dataset.theme = t; }
   applyTheme(store("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
   $("#theme-toggle").onclick = () => {
@@ -52,7 +49,6 @@
     applyTheme(t); store("theme", t);
   };
 
-  // ------------------------------------------------------------ navigation
   function showPage(p) {
     $$(".tab").forEach((b) => b.classList.toggle("active", b.dataset.page === p));
     $$(".page").forEach((s) => s.classList.toggle("active", s.id === `page-${p}`));
@@ -63,7 +59,6 @@
   }
   $$(".tab").forEach((b) => (b.onclick = () => showPage(b.dataset.page)));
 
-  // ------------------------------------------------------------ stepper
   function setStep(n) {
     $$("#stepper li").forEach((li) => {
       const s = +li.dataset.step;
@@ -72,7 +67,6 @@
     });
   }
 
-  // ------------------------------------------------------------ mode switching
   function setMode(m) {
     state.mode = m;
     $$(".mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === m));
@@ -95,32 +89,26 @@
     setStep(1);
   }
 
-  // ------------------------------------------------------------ meta / setup
   async function init() {
     try {
       const m = await api("/api/meta");
       state.meta = m;
       $("#max-mb").textContent = m.max_image_mb;
-      // tones
       $("#tone-pills").innerHTML = m.tones.map((t) => `<button type="button" class="pill" data-tone="${esc(t)}">${esc(t)}</button>`).join("");
       $$("#tone-pills .pill").forEach((p) => (p.onclick = () => setTone(p.dataset.tone)));
       setTone("professional", true);
       $("#v-tone").innerHTML = m.tones.map((t) => `<option>${esc(t)}</option>`).join("");
-      // formats
       $("#f-format").innerHTML = m.formats.map((f) => `<option value="${f}">${f.toUpperCase()}</option>`).join("");
       $("#export-format").innerHTML = m.formats.map((f) => `<button type="button" data-f="${f}">${f}</button>`).join("");
       $$("#export-format button").forEach((b) => (b.onclick = () => setExportFmt(b.dataset.f)));
       setExportFmt("plain");
-      // styles
       $("#style-tiles").innerHTML = Object.keys(m.styles).map((k) =>
         `<button type="button" class="style-tile" data-style="${k}" title="${esc(m.styles[k])}"><div class="sw" style="background:${STYLE_SWATCH[k] || "#ccc"}"><i></i></div><small>${esc(k.replace(/_/g, " "))}</small></button>`).join("");
       $$("#style-tiles .style-tile").forEach((t) => (t.onclick = () => setStyle(t.dataset.style)));
       setStyle("studio_white");
-      // providers
       const opts = [["auto", `Auto (${m.default_provider})`]].concat(
         Object.entries(m.providers).map(([k, ok]) => [k, `${k === "mock" ? "Offline (no key)" : k[0].toUpperCase() + k.slice(1)}${ok ? "" : " — not configured"}`]));
       $("#f-provider").innerHTML = opts.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join("");
-      // status chips
       const p = $("#chip-provider");
       p.classList.add(m.default_provider === "mock" ? "warn" : "ok");
       $("span", p).textContent = m.default_provider === "mock" ? "Offline AI" : `AI: ${m.default_provider}`;
@@ -152,7 +140,6 @@
   }
   function currentStep() { return $$("#stepper li.on").length || 1; }
 
-  // ------------------------------------------------------------ image upload
   const dz = $("#dropzone");
   const input = $("#image-input");
   function takeFile(f) {
@@ -172,7 +159,6 @@
   ["dragleave", "drop"].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove("drag"); }));
   dz.addEventListener("drop", (e) => takeFile(e.dataTransfer.files[0]));
 
-  // ------------------------------------------------------------ form helpers
   const val = (id) => $(id).value.trim();
   function facts() {
     return {
@@ -231,7 +217,6 @@
   };
   $("#gen-form").addEventListener("input", () => { if (currentStep() < 2) setStep(1); });
 
-  // ------------------------------------------------------------ generate
   $("#gen-form").onsubmit = async (e) => {
     e.preventDefault();
     clearErrors();
@@ -285,7 +270,6 @@
     return flags.map((f) => `<div class="flag">${ICON_WARN}<span>${esc(f)}</span></div>`).join("");
   }
 
-  // ------------------------------------------------------------ text result + review
   function renderText(r) {
     $("#skeleton").hidden = true;
     $("#text-result").hidden = false;
@@ -378,7 +362,6 @@
     } catch (e) { toast(e.message || "Download failed.", "bad"); }
   };
 
-  // ------------------------------------------------------------ image result
   function renderImage(r) {
     $("#skeleton").hidden = true;
     $("#image-result").hidden = false;
@@ -424,7 +407,6 @@
     toast("Image loaded into Image → Text. Add facts and generate.");
   };
 
-  // ------------------------------------------------------------ history
   async function loadHistory() {
     const seg = $("#history-filter");
     if (!seg.children.length) {
@@ -483,7 +465,6 @@
   $("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").hidden = true; };
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal").hidden = true; });
 
-  // ------------------------------------------------------------ evaluation
   const fmt = {
     pct: (v) => (v == null ? "—" : `${(v * 100).toFixed(v < 0.1 && v > 0 ? 1 : 0)}%`),
     ms: (v) => (v == null ? "—" : v >= 1000 ? `${(v / 1000).toFixed(2)} s` : `${Math.round(v)} ms`),
@@ -521,7 +502,6 @@
   }
   $("#refresh-metrics").onclick = loadMetrics;
 
-  // ------------------------------------------------------------ voices
   async function loadVoiceOptions() {
     try {
       const { items } = await api("/api/voices");

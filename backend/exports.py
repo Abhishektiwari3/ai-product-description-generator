@@ -1,4 +1,3 @@
-"""Output formats that match the seller's next step (slide 6): plain text, HTML, JSON, CSV."""
 from __future__ import annotations
 
 import csv
@@ -15,7 +14,7 @@ def export_draft(draft: ListingDraft, fmt: str, product_name: str = "") -> Tuple
     fmt = (fmt or "plain").lower()
     if fmt == "json":
         body = draft.model_dump()
-        body.pop("review_flags", None)  # flags are for the reviewer, not the storefront
+        body.pop("review_flags", None)
         return json.dumps(body, indent=2, ensure_ascii=False), "application/json", "json"
     if fmt == "html":
         bullets = "\n".join(f"    <li>{html.escape(b)}</li>" for b in draft.bullets)

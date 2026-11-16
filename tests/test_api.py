@@ -1,14 +1,10 @@
-"""End-to-end API tests in offline mode (no API key, in-memory MongoDB).
-
-Run from the project root:  pytest -q
-"""
 import io
 import os
 
 os.environ["DEFAULT_PROVIDER"] = "mock"
-os.environ["OPENAI_API_KEY"] = ""  # tests never call paid APIs, even if a .env has keys
+os.environ["OPENAI_API_KEY"] = ""
 os.environ["GEMINI_API_KEY"] = ""
-os.environ["MONGO_URI"] = "mongodb://localhost:1"  # force the in-memory fallback
+os.environ["MONGO_URI"] = "mongodb://localhost:1"
 os.environ["RATE_LIMIT_PER_MINUTE"] = "1000"
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -37,7 +33,7 @@ def test_text_to_text_slide12_example():
     assert r.status_code == 200
     d = r.json()["draft"]
     assert "stainless steel" in d["title"].lower()
-    assert any("Size" in f for f in d["review_flags"])  # capacity not supplied -> flagged, not invented
+    assert any("Size" in f for f in d["review_flags"])
     assert not any(ch.isdigit() for ch in d["description"])
 
 

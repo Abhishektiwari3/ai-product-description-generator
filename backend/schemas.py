@@ -1,7 +1,3 @@
-"""Data shapes for inputs and outputs (slides 6 and 9).
-
-Note: Optional/List are used instead of `X | None` so this runs on Python 3.9.
-"""
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -21,7 +17,7 @@ IMAGE_STYLES = {
 
 
 class ProductFacts(BaseModel):
-    """Everything the seller types in. Only name and category are required (slide 6 guardrail)."""
+    """Seller input. Only name and category are required."""
 
     product_name: str = Field("", description="Names the item")
     category: str = Field("", description="Sets the product context")
@@ -31,7 +27,7 @@ class ProductFacts(BaseModel):
     target_audience: str = ""
     use_case: str = ""
     brand_voice: str = "professional"
-    brand_voice_id: Optional[str] = None  # a saved voice from the voices collection
+    brand_voice_id: Optional[str] = None
     keyword: str = ""
     output_format: str = "plain"
     extra_notes: str = ""
@@ -39,7 +35,6 @@ class ProductFacts(BaseModel):
 
 
 class ListingDraft(BaseModel):
-    """The response shape from slide 9."""
 
     title: str
     description: str
@@ -55,7 +50,6 @@ class TextToImageRequest(BaseModel):
 
 
 class ReviewRequest(BaseModel):
-    """Human review step (slides 5, 10, 13)."""
 
     approved: bool = False
     edited: Optional[ListingDraft] = None
@@ -73,7 +67,6 @@ class ExportRequest(BaseModel):
 
 
 class BrandVoice(BaseModel):
-    """Saved brand voice rules (slide 15 safeguard, slide 16 next step)."""
 
     name: str = Field(..., min_length=1, max_length=60)
     base_tone: str = "professional"

@@ -1,9 +1,3 @@
-"""The request pipeline from slide 8:
-
-01 Validate -> 02 Normalize -> 03 Build prompt -> 04 Call model -> 05 Check response -> 06 Return draft
-
-Step 04 lives in providers.py so provider code stays separate from UI code (slide 10).
-"""
 from __future__ import annotations
 
 import json
@@ -27,7 +21,6 @@ LIMITS = {
     "feature_count": 15,
 }
 
-# JSON schema sent to the model (slide 9 "example response shape").
 LISTING_JSON_SCHEMA = {
     "type": "object",
     "properties": {
@@ -222,7 +215,7 @@ def _trim(s: str, n: int) -> str:
 
 
 def check_response(data: dict) -> ListingDraft:
-    """Structure check only - 'schema validation checks structure, not factual truth' (slide 9)."""
+    """Check the structure of the model output (not its factual truth)."""
     try:
         draft = ListingDraft(**data)
     except ValidationError as e:
@@ -296,12 +289,11 @@ def keyword_flags(draft: ListingDraft, keyword: str) -> List[str]:
     return []
 
 
-def finalize(draft: ListingDraft, facts: ProductFacts, check_numbers: bool = True) -> ListingDraft:
+def finalize(draft: ListingDraft, facts: ProductFacts) -> ListingDraft:
     """Merge model flags with our own guardrail flags (deduplicated)."""
     flags = list(draft.review_flags)
     flags += missing_fact_flags(facts)
-    if check_numbers:
-        flags += find_unsupported_claims(draft, facts)
+    flags += find_unsupported_claims(draft, facts)
     flags += keyword_flags(draft, facts.keyword)
     dedup: List[str] = []
     for f in flags:

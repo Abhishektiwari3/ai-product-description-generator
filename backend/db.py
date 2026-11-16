@@ -1,18 +1,7 @@
-"""MongoDB storage layer.
-
-Collections
------------
-generations   one document per request (mode, inputs, output draft, image ids, review, latency)
-images        uploaded and generated images (PNG bytes stored as BSON Binary, < 16 MB each)
-voices        saved brand voices (rules + example)
-request_logs  minimal operational log: mode, provider, latency, status. No product data (slide 7/15).
-
-If MongoDB is unreachable and ALLOW_MEMORY_FALLBACK=true, an in-memory mongomock
-database is used so the app still starts. The UI shows which one is active.
-"""
 from __future__ import annotations
 
 import datetime as dt
+import logging
 from typing import Any, Dict, List, Optional
 
 from bson import Binary, ObjectId
@@ -20,6 +9,9 @@ from pymongo import DESCENDING, MongoClient
 from pymongo.errors import PyMongoError
 
 from .config import Settings
+
+logger = logging.getLogger("uvicorn.error")
+COLLECTIONS = ["generations", "images", "voices", "request_logs"]
 
 
 def now() -> dt.datetime:
@@ -37,27 +29,33 @@ class Store:
         except PyMongoError:
             if not settings.allow_memory_fallback:
                 raise
-            import mongomock  # imported lazily: only needed for the fallback
+            import mongomock
 
             self.client = mongomock.MongoClient()
             self.backend = "memory (mongomock fallback)"
+            logger.warning("MongoDB not reachable at %s - using an in-memory database. Data is lost on restart.",
+                           settings.mongo_uri)
         self.db = self.client[settings.mongo_db]
+        self._create_collections()
         self.generations = self.db["generations"]
         self.images = self.db["images"]
         self.voices = self.db["voices"]
         self.logs = self.db["request_logs"]
         self._indexes()
+        logger.info("Database '%s' ready (%s).", settings.mongo_db, self.backend)
+
+    def _create_collections(self) -> None:
+        existing = set(self.db.list_collection_names())
+        for name in COLLECTIONS:
+            if name not in existing:
+                self.db.create_collection(name)
 
     def _indexes(self) -> None:
-        try:
-            self.generations.create_index([("created_at", DESCENDING)])
-            self.generations.create_index("mode")
-            self.logs.create_index([("created_at", DESCENDING)])
-            self.voices.create_index("name", unique=True)
-        except Exception:
-            pass
+        self.generations.create_index([("created_at", DESCENDING)])
+        self.generations.create_index("mode")
+        self.logs.create_index([("created_at", DESCENDING)])
+        self.voices.create_index("name", unique=True)
 
-    # ------------------------------------------------------------ images
     def save_image(self, png: bytes, kind: str) -> str:
         res = self.images.insert_one({"data": Binary(png), "mime": "image/png", "kind": kind,
                                       "size": len(png), "created_at": now()})
@@ -70,7 +68,6 @@ class Store:
             return None
         return bytes(doc["data"]) if doc else None
 
-    # ------------------------------------------------------------ generations
     def save_generation(self, doc: Dict[str, Any]) -> str:
         doc = dict(doc)
         doc["created_at"] = now()
@@ -127,7 +124,6 @@ class Store:
             r["reviewed_at"] = r["reviewed_at"].isoformat()
         return d
 
-    # ------------------------------------------------------------ voices
     def list_voices(self) -> List[dict]:
         out = []
         for v in self.voices.find().sort("name", 1):
@@ -156,13 +152,12 @@ class Store:
         except Exception:
             return False
 
-    # ------------------------------------------------------------ logs + metrics
     def log_request(self, mode: str, provider: str, latency_ms: float, status: str, error_code: str = "") -> None:
         self.logs.insert_one({"mode": mode, "provider": provider, "latency_ms": round(latency_ms, 1),
                               "status": status, "error_code": error_code, "created_at": now()})
 
     def metrics(self) -> dict:
-        """Evaluation metrics from slide 13, computed from stored logs and reviews."""
+        """Evaluation metrics computed from stored logs and reviews."""
         logs = list(self.logs.find({}, {"_id": 0}))
         gens = list(self.generations.find({}, {"mode": 1, "review": 1, "output": 1}))
 
